@@ -1,12 +1,22 @@
+//: To run this playground start a SimpleHTTPServer on the commandline like this:
+//:
+//: `python -m SimpleHTTPServer 8000`
+//:
+//: It will serve up the current directory, so make sure to be in the directory containing episodes.json
+
 import UIKit
 import XCPlayground
+
+
+typealias JSONDictionary = [String: AnyObject]
+
+let url = NSURL(string: "http://localhost:8000/episodes.json")!
+
 
 struct Episode {
     let id: String
     let title: String
 }
-
-typealias JSONDictionary = [String:AnyObject]
 
 extension Episode {
     init?(dictionary: JSONDictionary) {
@@ -17,9 +27,9 @@ extension Episode {
     }
 }
 
+
 struct Media {}
 
-let url = NSURL(string: "http://localhost:8000/episodes.json")!
 
 struct Resource<A> {
     let url: NSURL
@@ -35,6 +45,7 @@ extension Resource {
         }
     }
 }
+
 
 extension Episode {
     static let all = Resource<[Episode]>(url: url, parseJSON: { json in
@@ -55,6 +66,7 @@ final class Webservice {
         }.resume()
     }
 }
+
 
 XCPlaygroundPage.currentPage.needsIndefiniteExecution = true
 
