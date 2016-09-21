@@ -37,7 +37,7 @@ struct Resource<A> {
 }
 
 extension Resource {
-    init(url: URL, parseJSON: (AnyObject) -> A?) {
+    init(url: URL, parseJSON: @escaping (Any) -> A?) {
         self.url = url
         self.parse = { data in
             let json = try? JSONSerialization.jsonObject(with: data, options: [])
@@ -56,7 +56,7 @@ extension Episode {
 
 
 final class Webservice {
-    func load<A>(resource: Resource<A>, completion: (A?) -> ()) {
+    func load<A>(resource: Resource<A>, completion: @escaping (A?) -> ()) {
         URLSession.shared.dataTask(with: resource.url) { data, _, _ in
             guard let data = data else {
                 completion(nil)
