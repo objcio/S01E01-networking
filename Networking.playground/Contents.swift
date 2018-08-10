@@ -5,59 +5,45 @@
 //: It will serve up the current directory, so make sure to be in the directory containing episodes.json
 
 import UIKit
-import XCPlayground
+import PlaygroundSupport
 
 
-typealias JSONDictionary = [String: AnyObject]
-
-let url = NSURL(string: "http://localhost:8000/episodes.json")!
+let url = URL(string: "http://localhost:8000/episodes.json")!
 
 
-struct Episode {
+struct Episode: Decodable {
     let id: String
     let title: String
 }
 
-extension Episode {
-    init?(dictionary: JSONDictionary) {
-        guard let id = dictionary["id"] as? String,
-            title = dictionary["title"] as? String else { return nil }
-        self.id = id
-        self.title = title
-    }
+
+struct Media: Decodable {}
+
+
+struct Resource<A: Decodable> {
+    let url: URL
+    let parse: (Data) -> A?
 }
 
-
-struct Media {}
-
-
-struct Resource<A> {
-    let url: NSURL
-    let parse: NSData -> A?
-}
 
 extension Resource {
-    init(url: NSURL, parseJSON: AnyObject -> A?) {
+    init(url: URL) {
         self.url = url
         self.parse = { data in
-            let json = try? NSJSONSerialization.JSONObjectWithData(data, options: [])
-            return json.flatMap(parseJSON)
+            return try? JSONDecoder().decode(A.self, from: data)
         }
     }
 }
 
 
 extension Episode {
-    static let all = Resource<[Episode]>(url: url, parseJSON: { json in
-        guard let dictionaries = json as? [JSONDictionary] else { return nil }
-        return dictionaries.flatMap(Episode.init)
-    })
+    static let all = Resource<[Episode]>(url: url)
 }
 
 
 final class Webservice {
-    func load<A>(resource: Resource<A>, completion: (A?) -> ()) {
-        NSURLSession.sharedSession().dataTaskWithURL(resource.url) { data, _, _ in
+    func load<A>(resource: Resource<A>, completion: @escaping (A?) -> ()) {
+        URLSession.shared.dataTask(with: resource.url) { data, _, _ in
             guard let data = data else {
                 completion(nil)
                 return
@@ -68,8 +54,9 @@ final class Webservice {
 }
 
 
-XCPlaygroundPage.currentPage.needsIndefiniteExecution = true
+PlaygroundPage.current.needsIndefiniteExecution = true
 
-Webservice().load(Episode.all) { result in
-    print(result)
+Webservice().load(resource: Episode.all) { result in
+    print(result ?? "")
 }
+
